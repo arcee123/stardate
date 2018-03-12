@@ -2,12 +2,15 @@
 #
 # Author: Rahul Anand <et@eternal-thinker.com>
 #         2014-02-21, stardate [-28]9946.35
+#         Evan Cutler <arcee123@gmail.com>
+#         2018-03-12, stardate [-27]7363.01
 #
 # Description:
 #   Convert date formats to Stardates
 #   Uses Stardate versions in Star Trek FAQ, as adopted by Google Calender
+#   Update of code for use by Python 3.4+
 #
-# Python version: 2.7
+# Python version: 3.4+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +30,8 @@
 # stardate: convert between date formats
 # by Andrew Main <zefram@fysh.org>
 # 1997-12-26, stardate [-30]0458.96
+# Updated to Python3 by: Evan Cutler <arcee123@gmail.com>
+# 2018-03-12, stardate [-27]7363.01
 #
 # Copyright (c) 1996, 1997 Andrew Main.  All rights reserved.
 #
@@ -81,18 +86,18 @@ class Stardate():
 
         if S < ufpepoch:
             # negative stardate
-            diff = ufpepoch - S
+            diff = int(ufpepoch - S)
             nsecs = 2000*dayseconds - 1 - (diff % (2000 * dayseconds))
             isneg = True
-            nissue = 1 + ((diff / (2000 * dayseconds)) & 0xffffffff)
-            integer = nsecs / (dayseconds/5)
-            frac = ( ((nsecs % (dayseconds/5)) << 32) | F ) * 50
+            nissue = 1 + (int(diff / (2000 * dayseconds)) & 0xffffffff)
+            integer = nsecs / int(dayseconds/5)
+            frac = ( (int(nsecs % (dayseconds/5)) << 32) | F ) * 50
         elif S < tngepoch:
             # positive stardate
             diff = S - ufpepoch
             nsecs = diff % (2000 * dayseconds)
             isneg = False
-            nissue = (diff / (2000 * dayseconds)) & 0xffffffff
+            nissue = int(diff / (2000 * dayseconds)) & 0xffffffff
 
             if nissue < 19 or ( nissue == 19 and nsecs < (7340*(dayseconds/5)) ) :
                 # TOS era
@@ -110,15 +115,13 @@ class Stardate():
                     if integer >= 10000:
                         integer -= 10000
                         nissue += 1
-                    frac = ( ((nsecs % (dayseconds*2)) << 32) | F ) * 5
+                    frac = ((int(nsecs % (dayseconds*2)) << 32) | F ) * 5
                 else:
                     # early film era
                     integer = 7340 + nsecs / (dayseconds*10)
                     frac = ( ((nsecs % (dayseconds*10)) << 32) | F )
 
         ret = "[" + ("-" if isneg else "")  + str(nissue) + "]" + str(integer).zfill(4)
-        frac = ( ( ((frac * 125) / 108) >> 32 ) & 0xffffffff ) # round
-        ret += "." + str(frac)
         return ret
 
     def toTngStardate(self, S=0, F=0):
@@ -179,7 +182,7 @@ class Stardate():
 
         sd = re.findall(sdreg, stardate)
         if not len(sd):
-            print "Invalid stardate format"
+            print("Invalid stardate format")
             return
         sd = sd[0]
         nissue = int(sd[0])
@@ -191,7 +194,7 @@ class Stardate():
         if (integer > 99999) or \
            (not isneg and nissue == twenty and integer > 5005) or \
            ((isneg or nissue < twenty) and integer > 9999):
-            print "Integer part is out of range"
+            print("Integer part is out of range")
             return
         
         if isneg or nissue <= twenty:
@@ -333,10 +336,10 @@ class Stardate():
 
 if __name__ == "__main__":
     sd = Stardate()
-
+    print(sys.argv)
     if len(sys.argv) > 1:
         if sys.argv[1].startswith('['):
-            print sd.fromStardate(sys.argv[1])
+            print(sd.fromStardate(sys.argv[1]))
         else:
             dt = sys.argv[1]
             if len(sys.argv) > 2:
@@ -344,12 +347,11 @@ if __name__ == "__main__":
             else:
                 dt += " 0:0:0"
             date = datetime.datetime.strptime(dt, "%Y-%m-%d %H:%M:%S") # Validating date ranges            
-            print sd.toStardate(dt)
+            print(sd.toStardate(dt))
     else:
-        print sd.toStardate()
+        print(sd.toStardate())
 
     # import time
     # while True:
     #     print sd.toStardate()
     #     time.sleep(1)
-
